@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Primary Meta Tags -->
+  <title>Organization X — Employee Management & Payroll System</title>
+  <meta name="description" content="Employee Management & Payroll System — Manage employees, process payroll with tax and insurance deductions, generate reports, and maintain secure authentication." />
+  <meta name="keywords" content="employee management, payroll system, HR software, salary calculator" />
+  <meta name="author" content="Organization X" />
+
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+<!-- Login Page -->
+<div id="login-page">
+  <div class="login-card">
+
+    <div class="login-logo">
+      <div class="logo-icon">🏢</div>
+      <div class="login-logo-text">
+        <div class="org-name">Organization X</div>
+        <div class="sys-name">Payroll System</div>
+      </div>
+    </div>
+
+    <h1 class="login-title">Welcome Back</h1>
+    <p class="login-subtitle">Sign in to access the management portal</p>
+
+    <!-- WB-09: Account Lockout Banner -->
+    <div id="lock-banner" class="lock-banner" style="display:none">
+      <span>🔒</span>
+      <div>
+        <div id="lock-msg">Account locked. Contact administrator.</div>
+        <div style="font-size:11px;opacity:0.8;margin-top:2px">Auto-unlocks in <span id="lock-timer"></span></div>
+      </div>
+    </div>
+
+    <form id="login-form" novalidate>
+
+      <div class="form-group">
+        <label class="form-label" for="login-username">Username</label>
+        <div class="input-wrap">
+          <input
+            type="text"
+            id="login-username"
+            class="form-input"
+            placeholder="Enter your username"
+            autocomplete="username"
+            required
+          />
+          <span class="input-icon" style="pointer-events:none">👤</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-password">Password</label>
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="login-password"
+            class="form-input"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            required
+          />
+          <span class="input-icon" style="left:14px;pointer-events:none">🔑</span>
+          <button type="button" id="toggle-pw" class="toggle-pw" aria-label="Toggle password visibility">👁️</button>
+        </div>
+        <!-- BB-07: Error message display -->
+        <div id="login-error" class="error-msg"></div>
+        <div id="attempt-badge" class="attempt-badge" style="display:none"></div>
+      </div>
+
+      <button type="submit" id="btn-login" class="btn-primary">
+        <span>🔐</span> Sign In
+      </button>
+
+    </form>
+
+    <p class="login-footer">
+      Demo credentials: <span>admin</span> / <span>Admin@1234</span><br/>
+      <span style="color:var(--text-muted);font-size:11px;margin-top:4px;display:block">
+        Account locks after 3 failed attempts (WB-09)
+      </span>
+    </p>
+  </div>
+</div>
+
+
+<!-- Main Application Structure -->
+<div id="app">
+
+  <!-- ── Sidebar Navigation ── -->
+  <nav id="sidebar" role="navigation" aria-label="Main Navigation">
+
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="logo-icon">🏢</div>
+        <div class="sidebar-logo-text">
+          <div class="org">Organization X</div>
+          <div class="name">EMP & Payroll</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+
+      <div class="nav-section-label">Main</div>
+
+      <div class="nav-item" data-page="dashboard" role="button" tabindex="0" aria-label="Dashboard">
+        <span class="nav-icon">📊</span>
+        <span>Dashboard</span>
+      </div>
+
+      <div class="nav-section-label">Management</div>
+
+      <div class="nav-item" data-page="employees" role="button" tabindex="0" aria-label="Employee Management">
+        <span class="nav-icon">👥</span>
+        <span>Employees</span>
+        <span class="nav-badge" id="nav-emp-count">5</span>
+      </div>
+
+      <div class="nav-item" data-page="payroll" role="button" tabindex="0" aria-label="Process Payroll">
+        <span class="nav-icon">💰</span>
+        <span>Process Payroll</span>
+      </div>
+
+      <div class="nav-section-label">Analytics</div>
+
+      <div class="nav-item" data-page="reports" role="button" tabindex="0" aria-label="Reports">
+        <span class="nav-icon">📋</span>
+        <span>Reports</span>
+      </div>
+
+      <div class="nav-section-label">QA</div>
+
+      <div class="nav-item" data-page="testlog" role="button" tabindex="0" aria-label="Test Case Log">
+        <span class="nav-icon">🧪</span>
+        <span>Test Case Log</span>
+      </div>
+
+    </div>
+
+    <!-- Sidebar Footer / User info -->
+    <div class="sidebar-footer">
+      <div class="user-info" id="sidebar-user-wrap">
+        <div class="user-avatar" id="sidebar-user-avatar">AD</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebar-user-name">Admin User</div>
+          <div class="user-role" id="sidebar-user-role">Administrator</div>
+        </div>
+        <span class="logout-btn" id="btn-logout" title="Sign Out" role="button" tabindex="0">⏻</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Main Content ── -->
+  <div id="main-content">
+
+    <!-- Topbar -->
+    <header id="topbar" role="banner">
+      <div class="topbar-left">
+        <div class="page-title" id="topbar-title">Dashboard</div>
+        <div class="page-subtitle" id="topbar-subtitle">Overview of your organization</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-badge">
+          <div class="dot"></div>
+          <span id="topbar-date">22 Sep 2026</span>
+        </div>
+        <div class="topbar-badge">
+          👤 <span id="topbar-user">Admin User</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Dashboard View -->
+    <main id="page-dashboard" class="page-content active" role="main">
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+
+        <div class="stat-card indigo">
+          <div class="stat-icon">👥</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-employees">0</div>
+            <div class="stat-label">Total Employees</div>
+            <div class="stat-delta up">● All records</div>
+          </div>
+        </div>
+
+        <div class="stat-card emerald">
+          <div class="stat-icon">✅</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-active">0</div>
+            <div class="stat-label">Active Staff</div>
+            <div class="stat-delta up">● Currently active</div>
+          </div>
+        </div>
+
+        <div class="stat-card amber">
+          <div class="stat-icon">💸</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-payroll" style="font-size:20px">$0</div>
+            <div class="stat-label">Sept Net Payroll</div>
+            <div class="stat-delta up">● This month</div>
+          </div>
+        </div>
+
+        <div class="stat-card sky">
+          <div class="stat-icon">📄</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-records">0</div>
+            <div class="stat-label">Payroll Records</div>
+            <div class="stat-delta up">● All time</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Dashboard Grid -->
+      <div class="dashboard-grid">
+
+        <!-- Department Breakdown -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Department Distribution</div>
+              <div class="card-subtitle">Headcount by department</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="dept-bars"></div>
+          </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Recent Activity</div>
+              <div class="card-subtitle">Audit trail</div>
+            </div>
+          </div>
+          <div class="card-body" style="padding:8px 16px">
+            <div id="activity-list" class="recent-activity"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Employees View -->
+    <main id="page-employees" class="page-content" role="main">
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">👥 Employee Records</div>
+            <div class="card-subtitle">
+              <span id="emp-count">0</span> total employees — FR1: Employee Management
+            </div>
+          </div>
+          <div class="flex gap-3 items-center">
+            <div class="search-bar">
+              <span>🔍</span>
+              <input
+                type="text"
+                id="emp-search"
+                placeholder="Search by name, ID, dept…"
+                aria-label="Search employees"
+              />
+            </div>
+            <button id="btn-add-employee" class="btn btn-accent" aria-label="Add new employee">
+              ➕ Add Employee
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table aria-label="Employee records table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Role / Position</th>
+                <th>Department</th>
+                <th>Gross Salary</th>
+                <th>Start Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="emp-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Payroll View -->
+    <main id="page-payroll" class="page-content" role="main">
+
+      <div class="calc-grid">
+
+        <!-- Calculator Form -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">💰 Payroll Calculator</div>
+              <div class="card-subtitle">Tax 15% · Insurance 5% — FR2/FR3</div>
+            </div>
+          </div>
+          <div class="card-body">
+
+            <form id="payroll-form" novalidate>
+
+              <div class="field">
+                <label for="payroll-emp-select">Select Employee *</label>
+                <select id="payroll-emp-select" required aria-label="Select employee for payroll">
+                  <option value="">— Select Employee —</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="payroll-hours">Hours Worked</label>
+                <input
+                  type="number"
+                  id="payroll-hours"
+                  min="0"
+                  max="744"
+                  step="0.5"
+                  value="160"
+                  placeholder="e.g. 160"
+                  aria-label="Hours worked"
+                />
+                <div class="error">Please enter valid hours (≥ 0)</div>
+              </div>
+
+              <div style="margin-bottom:20px">
+                <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:12px">
+                  Deductions
+                </label>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;color:var(--text-secondary)" for="payroll-tax-check">
+                    <input
+                      type="checkbox"
+                      id="payroll-tax-check"
+                      checked
+                      style="width:16px;height:16px;accent-color:var(--accent-primary)"
+                    />
+                    Apply Tax Deduction (15% · WB-01)
+                  </label>
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;color:var(--text-secondary)" for="payroll-ins-check">
+                    <input
+                      type="checkbox"
+                      id="payroll-ins-check"
+                      checked
+                      style="width:16px;height:16px;accent-color:var(--accent-primary)"
+                    />
+                    Apply Insurance Deduction (5% · WB-01)
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-accent btn-lg w-full" id="btn-process-payroll">
+                ⚡ Process & Save Payroll
+              </button>
+
+            </form>
+
+          </div>
+        </div>
+
+        <!-- Breakdown Card -->
+        <div>
+          <div id="payroll-result-card" style="display:none" class="breakdown-card">
+            <div class="breakdown-title">📊 Salary Breakdown</div>
+
+            <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06)">
+              <div style="font-size:13px;font-weight:600;color:var(--text-primary)" id="payroll-emp-display">—</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Payment Date: <span id="payroll-date-display">—</span></div>
+            </div>
+
+            <div class="breakdown-row gross">
+              <span class="breakdown-label">Gross Salary</span>
+              <span class="breakdown-val" id="payroll-gross">$0.00</span>
+            </div>
+
+            <div class="breakdown-row deduction">
+              <span class="breakdown-label">Tax Deduction (15%)</span>
+              <span class="breakdown-val" id="payroll-tax">-$0.00</span>
+            </div>
+
+            <div class="breakdown-row deduction">
+              <span class="breakdown-label">Insurance (5%)</span>
+              <span class="breakdown-val" id="payroll-insurance">-$0.00</span>
+            </div>
+
+            <div class="breakdown-row total">
+              <span class="breakdown-label">Net Pay</span>
+              <span class="breakdown-val" id="payroll-net">$0.00</span>
+            </div>
+          </div>
+
+          <!-- Reference Card -->
+          <div class="card mt-4">
+            <div class="card-header">
+              <div>
+                <div class="card-title">📌 Payroll Rules</div>
+                <div class="card-subtitle">From test case specifications</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div style="font-size:13px;color:var(--text-secondary);line-height:1.9">
+                <div>📐 <strong style="color:var(--text-primary)">Tax Rate:</strong> 15% of Gross (FR3)</div>
+                <div>🛡️ <strong style="color:var(--text-primary)">Insurance:</strong> 5% of Gross (FR3)</div>
+                <div>⏱️ <strong style="color:var(--text-primary)">0 Hours:</strong> Net Pay = $0.00 (BB-04)</div>
+                <div>❌ <strong style="color:var(--text-primary)">Negative Salary:</strong> Throws error (WB-06)</div>
+                <div>💾 <strong style="color:var(--text-primary)">Records:</strong> Saved to DB store (WB-10)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Payroll History -->
+      <div class="card mt-6">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📜 Recent Payroll Records</div>
+            <div class="card-subtitle">WB-10: Payment DB persistence layer</div>
+          </div>
+        </div>
+        <div class="table-container">
+          <table aria-label="Payroll records table">
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Gross Salary</th>
+                <th>Tax</th>
+                <th>Insurance</th>
+                <th>Net Pay</th>
+                <th>Payment Date</th>
+              </tr>
+            </thead>
+            <tbody id="payroll-history-tbody">
+              <!-- Populated by onpage render -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Reports View -->
+    <main id="page-reports" class="page-content" role="main">
+
+      <!-- Filter Form -->
+      <div class="card mb-4" style="margin-bottom:20px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📋 Payroll Report Generator</div>
+            <div class="card-subtitle">FR4 — Generate reports by date range · WB-07: reversed dates rejected</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <form id="report-form" novalidate>
+            <div class="form-row" style="align-items:flex-end">
+              <div class="field" style="margin:0">
+                <label for="report-start">Start Date</label>
+                <input type="date" id="report-start" required aria-label="Report start date" />
+              </div>
+              <div class="field" style="margin:0">
+                <label for="report-end">End Date</label>
+                <input type="date" id="report-end" required aria-label="Report end date" />
+              </div>
+              <button type="submit" class="btn btn-accent" id="btn-generate-report" style="flex-shrink:0">
+                📊 Generate Report
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Report Output -->
+      <div id="report-output" style="display:none">
+
+        <div class="report-header-info">
+          <span style="font-size:20px">📊</span>
+          <div>
+            Payroll Report for <strong id="rpt-date-range">—</strong>
+            &nbsp;·&nbsp; <strong id="rpt-record-count">0</strong> records
+          </div>
+        </div>
+
+        <!-- Summary Tiles -->
+        <div class="report-summary">
+          <div class="report-sum-item">
+            <div class="report-sum-val text-accent" id="rpt-total-gross">$0.00</div>
+            <div class="report-sum-lbl">Total Gross</div>
+          </div>
+          <div class="report-sum-item">
+            <div class="report-sum-val text-danger" id="rpt-total-tax">$0.00</div>
+            <div class="report-sum-lbl">Total Deductions</div>
+          </div>
+          <div class="report-sum-item">
+            <div class="report-sum-val text-success" id="rpt-total-net">$0.00</div>
+            <div class="report-sum-lbl">Total Net Pay</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Payment Records</div>
+          </div>
+          <div class="table-container">
+            <table aria-label="Payroll report table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Emp ID</th>
+                  <th>Employee Name</th>
+                  <th>Department</th>
+                  <th>Gross Salary</th>
+                  <th>Deductions</th>
+                  <th>Net Pay</th>
+                </tr>
+              </thead>
+              <tbody id="report-tbody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Test Log View -->
+    <main id="page-testlog" class="page-content" role="main">
+
+      <!-- Summary Stats -->
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card emerald">
+          <div class="stat-icon">✅</div>
+          <div class="stat-info">
+            <div class="stat-value" id="tc-pass">0</div>
+            <div class="stat-label">Tests Passed</div>
+          </div>
+        </div>
+        <div class="stat-card rose">
+          <div class="stat-icon">❌</div>
+          <div class="stat-info">
+            <div class="stat-value" id="tc-fail">0</div>
+            <div class="stat-label">Tests Failed</div>
+          </div>
+        </div>
+        <div class="stat-card indigo">
+          <div class="stat-icon">🧪</div>
+          <div class="stat-info">
+            <div class="stat-value" id="tc-total">0</div>
+            <div class="stat-label">Total Cases</div>
+          </div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-icon">📈</div>
+          <div class="stat-info">
+            <div class="stat-value" id="tc-pct">0%</div>
+            <div class="stat-label">Pass Rate</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🧪 Test Case Results — 22 September 2026</div>
+            <div class="card-subtitle">Black-box & White-box functional test suite · Tester: Software Engineer / QA Team</div>
+          </div>
+          <span class="badge badge-warning">1 Bug Found (WB-06)</span>
+        </div>
+        <div class="table-container">
+          <table aria-label="Test case results table">
+            <thead>
+              <tr>
+                <th>TC #</th>
+                <th>Type</th>
+                <th>Requirement</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Notes / Actual Result</th>
+              </tr>
+            </thead>
+            <tbody id="tc-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+
+  </div><!-- /main-content -->
+
+</div><!-- /app -->
+
+
+<!-- Modals -->
+
+<!-- Add / Edit Employee Modal -->
+<div class="modal-overlay" id="emp-modal" role="dialog" aria-modal="true" aria-labelledby="emp-modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="emp-modal-title">Add New Employee</h2>
+      <button class="modal-close" data-close-modal="emp-modal" aria-label="Close modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="emp-form" novalidate>
+        <!-- Hidden edit ID -->
+        <input type="hidden" id="emp-edit-id" value="" />
+
+        <div class="form-row">
+          <div class="field">
+            <label for="emp-form-name">Full Name *</label>
+            <input type="text" id="emp-form-name" placeholder="e.g. John Doe" required />
+            <div class="error">Employee name is required (BB-02)</div>
+          </div>
+          <div class="field">
+            <label for="emp-form-id">Employee ID *</label>
+            <input type="text" id="emp-form-id" placeholder="e.g. EMP001" required />
+            <div class="error">Employee ID is required</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="emp-form-role">Role / Position *</label>
+            <input type="text" id="emp-form-role" placeholder="e.g. Software Engineer" required />
+            <div class="error">Role is required</div>
+          </div>
+          <div class="field">
+            <label for="emp-form-dept">Department *</label>
+            <select id="emp-form-dept" required>
+              <option value="">— Select Dept —</option>
+              <option value="IT">IT</option>
+              <option value="HR">HR</option>
+              <option value="Finance">Finance</option>
+              <option value="Operations">Operations</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Legal">Legal</option>
+            </select>
+            <div class="error">Department is required</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="emp-form-salary">Gross Salary ($/month) *</label>
+            <input type="number" id="emp-form-salary" min="0" step="0.01" placeholder="e.g. 5000.00" required />
+            <div class="error">Valid salary required (≥ 0)</div>
+          </div>
+          <div class="field">
+            <label for="emp-form-startdate">Start Date</label>
+            <input type="date" id="emp-form-startdate" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="emp-form-status">Status</label>
+          <select id="emp-form-status">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close-modal="emp-modal">Cancel</button>
+      <button class="btn btn-accent" onclick="document.getElementById('emp-form').requestSubmit()" id="btn-emp-save">
+        💾 Save Employee
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h2 class="modal-title" id="delete-modal-title">⚠️ Confirm Deletion</h2>
+      <button class="modal-close" data-close-modal="delete-modal" aria-label="Close modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--color-danger-bg);border:1px solid rgba(244,63,94,0.25);border-radius:var(--radius-md);padding:16px;font-size:14px;color:var(--text-secondary)">
+        <span id="delete-confirm-text">Are you sure?</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close-modal="delete-modal">Cancel</button>
+      <button class="btn btn-danger" id="btn-confirm-delete">🗑️ Delete</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Toast Notifications -->
+<div id="toast-container" class="toast-container" role="region" aria-label="Notifications" aria-live="polite"></div>
+
+
+<!-- ════════════════════════════════════════════
+     MODULAR JAVASCRIPT FILES
+════════════════════════════════════════════ -->
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/store.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/employees.js"></script>
+<script src="js/payroll.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/testRunner.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
